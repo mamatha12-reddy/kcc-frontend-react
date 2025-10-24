@@ -1,0 +1,46 @@
+name: Deploy Node Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+          --build-arg VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" \
+            -t mamatha12345678/kcc-react-version-1:latest \
+            -t mamatha12345678/kcc-react-version-1:${{ github.sha }} \
+            -f backend/Dockerfile backend
+
+      - name: Push Docker Images
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker push mamatha12345678/kcc-react-version-1:latest
+          docker push mamatha12345678/kcc-react-version-1:${{ github.sha }}
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull Docker Image
+        run: docker pull mamatha12345678/kcc-react-version-1:latest
+
+      - name: Remove Old Container (if exists)
+        run: docker rm -f reactjs-app-container || true
+
+      - name: Run Docker Container
+        run: |
+          docker run -d -p 3000:80 --name reactjs-app-container \
+            mamatha12345678/kcc-react-version-1:latest
