@@ -22,7 +22,7 @@ jobs:
           --build-arg VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" \
             -t mamatha12345678/kcc-react-version-1:latest \
             -t mamatha12345678/kcc-react-version-1:${{ github.sha }} \
-            -f backend/Dockerfile backend
+            -f frontend/Dockerfile frontend
 
       - name: Push Docker Images
         run: |
